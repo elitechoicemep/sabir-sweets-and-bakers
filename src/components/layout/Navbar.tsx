@@ -1,200 +1,270 @@
-import { Link, useNavigate } from "@tanstack/react-router";
-import { AnimatePresence, motion } from "framer-motion";
+import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import { Menu, Search, ShoppingBag, X } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { useCart } from "@/lib/cart";
+import { useLanguage } from "@/lib/i18n";
+import { products } from "@/data/catalog";
+import { searchProducts } from "@/services/products";
 import { cn } from "@/lib/utils";
-import { useCart } from "@/hooks/useCart";
 
-const NAV = [
-  { to: "/", label: "Home" },
-  { to: "/menu", label: "Menu" },
-  { to: "/cakes", label: "Cakes" },
-  { to: "/about", label: "About" },
-  { to: "/contact", label: "Contact" },
+const links = [
+  { to: "/", key: "nav.home" },
+  { to: "/menu", key: "nav.menu" },
+  { to: "/about", key: "nav.about" },
+  { to: "/contact", key: "nav.contact" },
 ] as const;
 
 export function Navbar() {
+  const { t, tUr } = useLanguage();
+  const { count, openCart } = useCart();
+  const navigate = useNavigate();
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [query, setQuery] = useState("");
-  const { count, openCart } = useCart();
-  const navigate = useNavigate();
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const overHero = pathname === "/";
 
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 40);
+    const onScroll = () => setScrolled(window.scrollY > 24);
     onScroll();
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  const submitSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    setSearchOpen(false);
+  useEffect(() => {
     setMobileOpen(false);
-    navigate({ to: "/menu", search: { q: query || undefined, category: undefined } });
+    setSearchOpen(false);
+  }, [pathname]);
+
+  useEffect(() => {
+    if (searchOpen) inputRef.current?.focus();
+  }, [searchOpen]);
+
+  const closeSearch = () => {
+    setSearchOpen(false);
+    setQuery("");
   };
 
-  const light = !scrolled;
+  const submitSearch = () => {
+    const q = query.trim();
+    if (!q) {
+      closeSearch();
+      return;
+    }
+    setSearchOpen(false);
+    setQuery("");
+    navigate({ to: "/menu", search: { q } });
+  };
+
+  const solid = scrolled || !overHero;
+  const results = query ? searchProducts(products, query).slice(0, 6) : [];
+
 
   return (
     <header className="fixed inset-x-0 top-0 z-50">
-      <div className="bg-brand-brown text-brand-cream/80">
-        <p className="label-xs py-2 text-center text-[0.5625rem] sm:text-[0.625rem]">
-          Freshly made daily • Lahore
+      <div className="bg-ink text-primary">
+        <p className="eyebrow mx-auto max-w-7xl px-4 py-2 text-center text-[0.625rem] sm:text-[0.6875rem]">
+          {t("announcement")}
         </p>
       </div>
 
       <div
         className={cn(
-          "transition-all duration-700 [transition-timing-function:var(--ease-cinematic)]",
-          scrolled
-            ? "bg-brand-cream text-brand-brown shadow-[0_1px_0_rgba(77,40,31,0.14)]"
-            : "bg-brand-brown/85 text-brand-cream backdrop-blur-[2px]",
+          "border-b transition-all duration-500",
+          solid
+            ? "border-border bg-background/95 backdrop-blur-md"
+            : "border-transparent bg-transparent",
         )}
       >
         <nav
-          aria-label="Main"
-          className="mx-auto flex max-w-[1400px] items-center justify-between gap-4 px-5 py-4 sm:px-8"
+          className="mx-auto flex max-w-7xl items-center gap-4 px-4 py-3 sm:px-6"
+          aria-label={t("nav.menu")}
         >
-          <Link to="/" className="min-w-0 leading-none" aria-label="Sabir Sweets & Bakers — home">
-            <span className="block font-display text-lg tracking-[-0.01em] sm:text-xl">
-              Sabir<span className="text-brand-orange"> Sweets</span>
+          <Link to="/" className="flex shrink-0 items-center gap-2.5 focus-visible:outline-none">
+            <span className="min-w-0">
+              <span
+                className={cn(
+                  "block truncate font-display text-base leading-tight sm:text-lg",
+                  solid ? "text-foreground" : "text-beige",
+                )}
+              >
+                {t("brand.name")}
+              </span>
             </span>
-            <span className="label-xs mt-1 block text-[0.5rem] opacity-60">& Bakers • Lahore</span>
           </Link>
 
-          <ul className="hidden items-center gap-9 lg:flex">
-            {NAV.map((item) => (
-              <li key={item.to}>
+          <ul className="ms-auto hidden items-center gap-7 lg:flex">
+            {links.map((link) => (
+              <li key={link.to}>
                 <Link
-                  to={item.to}
-                  activeOptions={{ exact: item.to === "/" }}
-                  activeProps={{ className: "text-brand-orange" }}
+                  to={link.to}
                   className={cn(
-                    "label-xs relative py-1 transition-colors duration-300 hover:text-brand-orange",
-                    "after:absolute after:bottom-0 after:left-0 after:h-px after:w-0 after:bg-brand-orange after:transition-[width] after:duration-500 hover:after:w-full",
+                    "font-nav text-xs font-semibold tracking-[0.14em] uppercase transition-colors",
+                    solid ? "text-foreground hover:text-burnt" : "text-beige hover:text-primary",
                   )}
+                  activeProps={{ className: "text-burnt" }}
+                  activeOptions={{ exact: link.to === "/" }}
                 >
-                  {item.label}
+                  {t(link.key)}
                 </Link>
               </li>
             ))}
           </ul>
 
-          <div className="flex shrink-0 items-center gap-1">
+          <div className={cn("flex items-center gap-1 lg:ms-6", "ms-auto lg:ms-6")}>
             <button
               type="button"
-              onClick={() => setSearchOpen((v) => !v)}
-              aria-label="Search the menu"
+              onClick={() => setSearchOpen((s) => !s)}
+              aria-label={t("nav.search")}
               aria-expanded={searchOpen}
-              className="grid h-11 w-11 place-items-center transition-colors hover:text-brand-orange"
+              className={cn(
+                "grid size-11 place-items-center rounded-sm transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none",
+                solid ? "text-foreground hover:text-burnt" : "text-beige hover:text-primary",
+              )}
             >
-              <Search className="h-[18px] w-[18px]" strokeWidth={1.5} />
+              <Search className="size-[1.15rem]" />
             </button>
+
             <button
               type="button"
               onClick={openCart}
-              aria-label={`Open basket, ${count} item${count === 1 ? "" : "s"}`}
-              className="relative grid h-11 w-11 place-items-center transition-colors hover:text-brand-orange"
+              aria-label={`${t("nav.cart")} (${count})`}
+              className={cn(
+                "relative grid size-11 place-items-center rounded-sm transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none",
+                solid ? "text-foreground hover:text-burnt" : "text-beige hover:text-primary",
+              )}
             >
-              <ShoppingBag className="h-[18px] w-[18px]" strokeWidth={1.5} />
+              <ShoppingBag className="size-[1.15rem]" />
               {count > 0 ? (
-                <span className="absolute right-1 top-1 grid h-4 min-w-4 place-items-center rounded-full bg-brand-orange px-1 font-label text-[0.5625rem] font-semibold text-brand-ink">
+                <span className="absolute -top-0.5 end-0.5 grid min-w-5 place-items-center rounded-full bg-primary px-1 font-nav text-[0.625rem] font-bold text-primary-foreground">
                   {count}
                 </span>
               ) : null}
             </button>
+
+            <Link
+              to="/menu"
+              className="eyebrow hidden min-h-11 items-center rounded-sm bg-primary px-4 text-primary-foreground transition-colors hover:bg-burnt hover:text-accent-foreground md:inline-flex"
+            >
+              <span>{t("nav.order")}</span>
+              <span className="ms-2 font-urdu text-sm tracking-normal normal-case">
+                {tUr("nav.order")}
+              </span>
+            </Link>
+
             <button
               type="button"
-              onClick={() => setMobileOpen(true)}
-              aria-label="Open navigation menu"
-              className="grid h-11 w-11 place-items-center transition-colors hover:text-brand-orange lg:hidden"
+              onClick={() => setMobileOpen((o) => !o)}
+              aria-label={mobileOpen ? t("nav.closeMenu") : t("nav.openMenu")}
+              aria-expanded={mobileOpen}
+              className={cn(
+                "grid size-11 place-items-center rounded-sm transition-colors lg:hidden focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none",
+                solid ? "text-foreground" : "text-beige",
+              )}
             >
-              <Menu className="h-5 w-5" strokeWidth={1.5} />
+              {mobileOpen ? <X className="size-5" /> : <Menu className="size-5" />}
             </button>
           </div>
         </nav>
 
-        <AnimatePresence initial={false}>
-          {searchOpen ? (
-            <motion.div
-              initial={{ height: 0, opacity: 0 }}
-              animate={{ height: "auto", opacity: 1 }}
-              exit={{ height: 0, opacity: 0 }}
-              transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
-              className="overflow-hidden border-t border-current/10"
-            >
-              <form onSubmit={submitSearch} className="mx-auto max-w-[1400px] px-5 py-4 sm:px-8">
-                <label htmlFor="nav-search" className="sr-only">
-                  Search products
+        {searchOpen ? (
+          <div className="max-h-[calc(100svh-8rem)] overflow-y-auto border-t border-border bg-background/98 backdrop-blur-md overscroll-contain">
+            <div className="mx-auto max-w-3xl px-4 py-5 sm:px-6">
+
+              <div className="flex items-center justify-between gap-3">
+                <label className="eyebrow text-burnt" htmlFor="nav-search">
+                  {t("nav.search")}
                 </label>
+                <button
+                  type="button"
+                  onClick={closeSearch}
+                  aria-label={t("nav.closeMenu")}
+                  className="grid size-9 place-items-center rounded-sm text-muted-foreground transition-colors hover:text-burnt focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+                >
+                  <X className="size-4" />
+                </button>
+              </div>
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  submitSearch();
+                }}
+                className="mt-2 flex gap-2"
+              >
                 <input
                   id="nav-search"
+                  ref={inputRef}
+                  type="search"
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
-                  placeholder="Search mithai, cakes, bakery…"
-                  className="w-full border-b border-current/25 bg-transparent pb-3 font-display text-xl outline-none placeholder:text-current/40 focus:border-brand-orange"
+                  onKeyDown={(e) => {
+                    if (e.key === "Escape") closeSearch();
+                  }}
+                  placeholder={t("menu.searchPlaceholder")}
+                  autoComplete="off"
+                  className="w-full rounded-sm border border-input bg-card px-4 py-3 text-base text-foreground placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
                 />
-              </form>
-            </motion.div>
-          ) : null}
-        </AnimatePresence>
-      </div>
-
-      <AnimatePresence>
-        {mobileOpen ? (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.3 }}
-            className="fixed inset-0 z-50 bg-brand-brown text-brand-cream lg:hidden"
-          >
-            <div className="flex items-center justify-between px-5 py-5">
-              <span className="font-display text-lg">Menu</span>
-              <button
-                type="button"
-                onClick={() => setMobileOpen(false)}
-                aria-label="Close navigation menu"
-                className="grid h-11 w-11 place-items-center"
-              >
-                <X className="h-5 w-5" strokeWidth={1.5} />
-              </button>
-            </div>
-            <ul className="px-5 pt-6">
-              {NAV.map((item, i) => (
-                <motion.li
-                  key={item.to}
-                  initial={{ opacity: 0, y: 18 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.06 * i, duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-                  className="border-b border-brand-cream/12"
+                <button
+                  type="submit"
+                  className="eyebrow shrink-0 rounded-sm bg-primary px-4 text-primary-foreground transition-colors hover:bg-burnt hover:text-accent-foreground"
                 >
+                  {t("nav.search")}
+                </button>
+              </form>
+
+              {query ? (
+                <ul className="mt-3 divide-y divide-border">
+                  {results.length === 0 ? (
+                    <li className="py-3 text-sm text-muted-foreground">{t("menu.empty")}</li>
+                  ) : (
+                    results.map((p) => (
+                      <li key={p.id}>
+                        <Link
+                          to="/product/$id"
+                          params={{ id: p.id }}
+                          onClick={closeSearch}
+                          className="flex items-center gap-3 py-3 transition-colors hover:text-burnt"
+                        >
+                          <img src={p.image} alt="" loading="lazy" className="size-12 shrink-0 rounded-sm object-cover" />
+                          <span className="min-w-0 flex-1">
+                            <span className="block truncate text-sm leading-6">{p.name}</span>
+                            <span className="block truncate font-urdu text-xs leading-6 text-muted-foreground">
+                              {p.nameUr}
+                            </span>
+                          </span>
+
+                        </Link>
+                      </li>
+                    ))
+                  )}
+                </ul>
+              ) : null}
+            </div>
+          </div>
+        ) : null}
+
+        {mobileOpen ? (
+          <div className="border-t border-border bg-background lg:hidden">
+            <ul className="mx-auto max-w-7xl px-4 py-3 sm:px-6">
+              {links.map((link) => (
+                <li key={link.to} className="border-b border-border/70 last:border-0">
                   <Link
-                    to={item.to}
-                    onClick={() => setMobileOpen(false)}
-                    activeOptions={{ exact: item.to === "/" }}
-                    activeProps={{ className: "text-brand-orange" }}
-                    className="block py-5 font-display text-3xl"
+                    to={link.to}
+                    className="block py-3.5 font-nav text-sm font-semibold tracking-wider uppercase text-foreground"
+                    activeProps={{ className: "text-burnt" }}
+                    activeOptions={{ exact: link.to === "/" }}
                   >
-                    {item.label}
+                    {t(link.key)}
                   </Link>
-                </motion.li>
+                </li>
               ))}
             </ul>
-            <div className="px-5 pt-8">
-              <Link
-                to="/cart"
-                onClick={() => setMobileOpen(false)}
-                className="label-xs text-brand-orange"
-              >
-                View basket ({count})
-              </Link>
-            </div>
-          </motion.div>
+          </div>
         ) : null}
-      </AnimatePresence>
+      </div>
     </header>
   );
 }

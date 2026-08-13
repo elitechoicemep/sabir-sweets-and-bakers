@@ -1,25 +1,18 @@
-import { API_BASE_URL, request } from "./api";
+/**
+ * Auth placeholder for the future /admin dashboard.
+ * Never gate admin access on client state alone — replace with a
+ * server-verified session and role check when the backend is added.
+ */
+export type AdminSession = { userId: string; role: "admin" } | null;
 
-export interface AdminSession {
-  token: string;
-  email: string;
+export async function getSession(): Promise<AdminSession> {
+  return null;
 }
 
-/**
- * Placeholder for real, server-side authentication. No client-side "admin"
- * check is implemented on purpose — fake security is worse than none.
- */
-export async function signIn(email: string, password: string): Promise<AdminSession> {
-  if (!API_BASE_URL) {
-    throw new Error("Authentication requires a backend. Connect one before enabling /admin.");
-  }
-  return request<AdminSession>("/auth/login", {
-    method: "POST",
-    body: JSON.stringify({ email, password }),
-  });
+export async function signIn(): Promise<AdminSession> {
+  throw new Error("Authentication is not configured yet.");
 }
 
 export async function signOut(): Promise<void> {
-  if (!API_BASE_URL) return;
-  await request("/auth/logout", { method: "POST" });
+  /* no-op until a backend is connected */
 }

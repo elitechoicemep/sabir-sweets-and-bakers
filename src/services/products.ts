@@ -1,58 +1,42 @@
-import { products } from "@/data/products";
-import { categories, getCategory } from "@/data/categories";
-import type { Product } from "@/types";
-import { local } from "./api";
+import { categories, products } from "@/data/catalog";
+import { apiGet } from "./api";
+import type { Category, CategoryId, Product } from "@/types";
 
-export type SortKey = "featured" | "name-asc" | "name-desc";
-
-export interface ProductQuery {
-  category?: string;
-  search?: string;
-  sort?: SortKey;
+export function listCategories(): Promise<Category[]> {
+  return apiGet<Category[]>("/categories", () => categories);
 }
 
-export function listCategories() {
-  return local(categories);
+export function listProducts(): Promise<Product[]> {
+  return apiGet<Product[]>("/products", () => products);
 }
 
-export function fetchCategory(slug: string) {
-  return local(getCategory(slug) ?? null);
+export function listFeatured(): Promise<Product[]> {
+  return apiGet<Product[]>("/products?featured=1", () => products.filter((p) => p.featured));
 }
 
-export function listProducts(query: ProductQuery = {}): Promise<Product[]> {
-  let result = [...products];
-  if (query.category && query.category !== "all") {
-    result = result.filter((p) => p.category === query.category);
-  }
-  if (query.search?.trim()) {
-    const q = query.search.trim().toLowerCase();
-    result = result.filter(
-      (p) => p.name.toLowerCase().includes(q) || p.description.toLowerCase().includes(q),
-    );
-  }
-  switch (query.sort) {
-    case "name-asc":
-      result.sort((a, b) => a.name.localeCompare(b.name));
-      break;
-    case "name-desc":
-      result.sort((a, b) => b.name.localeCompare(a.name));
-      break;
-    default:
-      result.sort((a, b) => Number(Boolean(b.featured)) - Number(Boolean(a.featured)));
-  }
-  return local(result);
+export function getProduct(id: string): Promise<Product | undefined> {
+  return apiGet<Product | undefined>(`/products/${id}`, () => products.find((p) => p.id === id));
 }
 
-export function listBestSellers() {
-  return local(products.filter((p) => p.bestSeller));
-}
-
-export function fetchProduct(id: string) {
-  return local(products.find((p) => p.id === id) ?? null);
-}
-
-export function listRelated(product: Product, limit = 4) {
-  return local(
-    products.filter((p) => p.category === product.category && p.id !== product.id).slice(0, limit),
+export function listByCategory(category: CategoryId): Promise<Product[]> {
+  return apiGet<Product[]>(`/products?category=${category}`, () =>
+    products.filter((p) => p.category === category),
   );
 }
+
+/** Matches English and Urdu names, descriptions and category labels. */
+export function searchProducts(items: Product[], query: string): Product[] {
+  const q = query.trim().toLowerCase();
+  if (!q) return items;
+  return items.filter((p) =>
+    [p.name, p.nameUr, p.description, p.descriptionUr, p.category].some((field) =>
+      field.toLowerCase().includes(q),
+    ),
+  );
+}
+
+export const productQueries = {
+  all: () => ({ queryKey: ["products"], queryFn: listProducts }),
+  featured: () => ({ queryKey: ["products", "featured"], queryFn: listFeatured }),
+  detail: (id: string) => ({ queryKey: ["products", id], queryFn: () => getProduct(id) }),
+};

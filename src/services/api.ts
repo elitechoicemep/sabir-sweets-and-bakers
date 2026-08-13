@@ -1,36 +1,23 @@
 /**
- * Thin transport layer. Today every call resolves against the local data
- * module; when the REST backend lands only this file needs a base URL.
- *
- *   Frontend -> services/api.ts -> REST API -> Backend -> Database -> Admin
+ * Thin API layer. Today it resolves from local data; swapping in a backend
+ * only requires changing the implementations here.
  */
-const env = import.meta.env as Record<string, string | undefined>;
+const BASE_URL = import.meta.env['VITE_API_BASE_URL'] ?? "";
 
-export const API_BASE_URL = env["VITE_API_BASE_URL"] ?? null;
-
-export class ApiError extends Error {
-  constructor(
-    message: string,
-    public status?: number,
-  ) {
-    super(message);
-    this.name = "ApiError";
-  }
+export async function apiGet<T>(path: string, fallback: () => T | Promise<T>): Promise<T> {
+  if (!BASE_URL) return fallback();
+  const res = await fetch(`${BASE_URL}${path}`);
+  if (!res.ok) throw new Error(`GET ${path} failed with ${res.status}`);
+  return (await res.json()) as T;
 }
 
-/** Resolve local data with the same async contract a network call would have. */
-export async function local<T>(value: T): Promise<T> {
-  return value;
-}
-
-export async function request<T>(path: string, init?: RequestInit): Promise<T> {
-  if (!API_BASE_URL) {
-    throw new ApiError(`No API configured for ${path}. Set VITE_API_BASE_URL.`);
-  }
-  const res = await fetch(`${API_BASE_URL}${path}`, {
-    headers: { "Content-Type": "application/json", ...(init?.headers ?? {}) },
-    ...init,
+export async function apiPost<T, B>(path: string, body: B, fallback: () => T | Promise<T>): Promise<T> {
+  if (!BASE_URL) return fallback();
+  const res = await fetch(`${BASE_URL}${path}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
   });
-  if (!res.ok) throw new ApiError(await res.text(), res.status);
+  if (!res.ok) throw new Error(`POST ${path} failed with ${res.status}`);
   return (await res.json()) as T;
 }

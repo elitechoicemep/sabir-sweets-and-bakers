@@ -1,19 +1,17 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { PageHeader } from "@/components/layout/PageHeader";
-import { BrandStory } from "@/components/home/BrandStory";
-import { LocationSection } from "@/components/home/LocationSection";
-
-const TITLE = "About | Sabir Sweets & Bakers, Lahore";
-const DESCRIPTION =
-  "Traditional sweets and fresh bakery prepared daily in Lahore by Sabir Sweets & Bakers.";
+import { Story } from "@/components/home/Sections";
 
 export const Route = createFileRoute("/about")({
   head: () => ({
     meta: [
-      { title: TITLE },
-      { name: "description", content: DESCRIPTION },
-      { property: "og:title", content: TITLE },
-      { property: "og:description", content: DESCRIPTION },
+      { title: "About Sabir Sweets & Bakers | Lahore Sweet Shop & Bakery" },
+      {
+        name: "description",
+        content:
+          "Sabir Sweets & Bakers is a Lahore sweet shop and bakery on Outfall Road, Saint Nagar — freshly prepared mithai, bakery items and desi nashta.",
+      },
+      { property: "og:title", content: "About | Sabir Sweets & Bakers" },
+      { property: "og:description", content: "A Lahore sweet shop and bakery built on fresh preparation." },
       { property: "og:url", content: "/about" },
     ],
     links: [{ rel: "canonical", href: "/about" }],
@@ -23,14 +21,8 @@ export const Route = createFileRoute("/about")({
 
 function AboutPage() {
   return (
-    <>
-      <PageHeader
-        label="About"
-        title="Tradition in every bite"
-        intro="Freshly made. Traditionally loved. Sweets, bakery and nashta prepared each day on Outfall Road, Lahore."
-      />
-      <BrandStory />
-      <LocationSection />
-    </>
+    <div className="bg-background">
+      <Story />
+    </div>
   );
 }

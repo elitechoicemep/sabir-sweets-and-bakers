@@ -1,67 +1,63 @@
-export type CategorySlug =
-  | "mithai"
-  | "cakes"
-  | "bakery"
-  | "biscuits"
-  | "desserts"
-  | "namkeen"
-  | "nashta"
-  | "beverages";
+export type CategoryId = "mithai" | "laddu" | "khasta" | "halwa" | "namkeen";
 
-export interface Category {
-  slug: CategorySlug;
+export type Category = {
+  id: CategoryId;
   name: string;
-  tagline: string;
+  nameUr: string;
   image: string;
-}
+};
 
-export interface Product {
+export type Product = {
   id: string;
+  /** Set on size variants; points back to the catalog product. */
+  baseId?: string;
   name: string;
-  category: CategorySlug;
+  nameUr: string;
+  category: CategoryId;
   description: string;
-  /** null until the client provides verified pricing. */
-  price: number | null;
-  weight: string | null;
+  descriptionUr: string;
+  /** "kg" (default) sells by weight; "piece" sells per single item */
+  unit?: "kg" | "piece";
+  /** Rate-list price for 1 kg (or per piece when unit is "piece") */
+  pricePerKg: number | null;
+  /** Price for the selected size (set on variants) */
+  price?: number | null;
+  /** Selected size in kg (set on variants) */
+  sizeKg?: number;
+  weight?: string;
+  weightUr?: string;
   image: string;
-  gallery?: string[];
   featured?: boolean;
-  bestSeller?: boolean;
-}
+};
 
-export interface CartLine {
+
+export type CartItem = {
   product: Product;
   quantity: number;
-}
+};
 
 export type OrderStatus =
   | "pending"
   | "confirmed"
   | "preparing"
   | "ready"
-  | "out_for_delivery"
+  | "out"
   | "delivered"
   | "cancelled";
 
-export interface CustomerDetails {
-  fullName: string;
+export type OrderCustomer = {
+  name: string;
   phone: string;
-  email: string;
+  email?: string;
   address: string;
-  city: string;
-  notes: string;
-}
+  city?: string;
+  notes?: string;
+};
 
-export interface OrderDraft {
-  customer: CustomerDetails;
-  lines: CartLine[];
-  subtotal: number | null;
-  delivery: number | null;
-  total: number | null;
-}
-
-export interface Order extends OrderDraft {
+export type Order = {
   id: string;
+  items: CartItem[];
+  customer: OrderCustomer;
   status: OrderStatus;
   createdAt: string;
-}
+};

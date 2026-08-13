@@ -1,35 +1,31 @@
-import { createFileRoute, Link, notFound } from "@tanstack/react-router";
+import { Link, createFileRoute, notFound } from "@tanstack/react-router";
+import { Minus, Plus, ArrowLeft, MessageCircle } from "lucide-react";
 import { useState } from "react";
-import { Minus, Plus } from "lucide-react";
-import { products } from "@/data/products";
-import { getCategory } from "@/data/categories";
-import { useCart } from "@/hooks/useCart";
-import { formatPrice } from "@/lib/config";
-import { buttonClass } from "@/components/ui/BrandButton";
-import { ProductCard } from "@/components/product/ProductCard";
-import { buildOrderMessage, whatsappLink } from "@/utils/whatsapp";
-import type { Product } from "@/types";
+import { toast } from "sonner";
+import { SIZES, products, sizeLabel, sizeLabelUr, variantProduct } from "@/data/catalog";
+import { useCart } from "@/lib/cart";
+import { useLanguage } from "@/lib/i18n";
+import { ProductCard } from "@/components/ProductCard";
+import { Ornament } from "@/components/Ornament";
+import { buildWhatsAppMessage, formatPrice, whatsappUrl } from "@/utils/order";
 
 export const Route = createFileRoute("/product/$id")({
   loader: ({ params }) => {
     const product = products.find((p) => p.id === params.id);
     if (!product) throw notFound();
-    const related = products
-      .filter((p) => p.category === product.category && p.id !== product.id)
-      .slice(0, 4);
-    return { product, related };
+    return { product };
   },
   head: ({ params, loaderData }) => {
     if (!loaderData) {
-      return { meta: [{ title: "Not found" }, { name: "robots", content: "noindex" }] };
+      return { meta: [{ title: "Unavailable | Sabir Sweets & Bakers" }, { name: "robots", content: "noindex" }] };
     }
-    const title = `${loaderData.product.name} | Sabir Sweets & Bakers`;
+    const { product } = loaderData;
     return {
       meta: [
-        { title },
-        { name: "description", content: loaderData.product.description },
-        { property: "og:title", content: title },
-        { property: "og:description", content: loaderData.product.description },
+        { title: `${product.name} (${product.nameUr}) | Sabir Sweets & Bakers` },
+        { name: "description", content: product.description },
+        { property: "og:title", content: `${product.name} | Sabir Sweets & Bakers` },
+        { property: "og:description", content: product.description },
         { property: "og:type", content: "product" },
         { property: "og:url", content: `/product/${params.id}` },
       ],
@@ -40,152 +36,171 @@ export const Route = createFileRoute("/product/$id")({
           children: JSON.stringify({
             "@context": "https://schema.org",
             "@type": "Product",
-            name: loaderData.product.name,
-            description: loaderData.product.description,
+            name: product.name,
+            alternateName: product.nameUr,
+            description: product.description,
             brand: { "@type": "Brand", name: "Sabir Sweets & Bakers" },
           }),
         },
       ],
     };
   },
-  notFoundComponent: ProductNotFound,
   component: ProductPage,
 });
 
 function ProductPage() {
-  const { product, related } = Route.useLoaderData();
+  const { product } = Route.useLoaderData();
+  const { t, isUrdu } = useLanguage();
   const { add } = useCart();
-  const [qty, setQty] = useState(1);
-  const category = getCategory(product.category);
+  const [quantity, setQuantity] = useState(1);
+  const [size, setSize] = useState<number>(1);
+  const variant = variantProduct(product, size);
 
-  const wa = whatsappLink(
-    buildOrderMessage({
-      lines: [{ product, quantity: qty }],
-      subtotal: null,
-      delivery: null,
-      total: null,
-    }),
-  );
+  const name = isUrdu ? product.nameUr : product.name;
+  const description = isUrdu ? product.descriptionUr : product.description;
+  const related = products.filter((p) => p.category === product.category && p.id !== product.id).slice(0, 4);
+  const wa = whatsappUrl(buildWhatsAppMessage([{ product: variant, quantity }]));
 
   return (
-    <>
-      <div className="bg-brand-cream pb-20 pt-32 sm:pt-40">
-        <div className="mx-auto grid max-w-[1400px] gap-12 px-5 sm:px-8 lg:grid-cols-2">
+    <div className="bg-background pb-24">
+      <div className="mx-auto max-w-7xl px-4 pt-10 sm:px-6">
+        <Link
+          to="/menu"
+          className="eyebrow inline-flex min-h-11 items-center gap-2 text-burnt hover:text-foreground"
+        >
+          <ArrowLeft className="size-4 rtl:rotate-180" />
+          {t("nav.menu")}
+        </Link>
+
+        <div className="mt-6 grid gap-10 lg:grid-cols-2">
           <div>
             <img
               src={product.image}
-              alt={product.name}
-              className="aspect-4/5 w-full object-cover"
+              alt={name}
+              className="aspect-square w-full rounded-sm object-cover shadow-card"
             />
-            <div className="mt-3 grid grid-cols-3 gap-3">
-              {[product.image, product.image, product.image].map((src, i) => (
+            <div className="mt-3 grid grid-cols-3 gap-3" aria-label={t("product.gallery")}>
+              {[0, 1, 2].map((i) => (
                 <img
                   key={i}
-                  src={src}
-                  alt={`${product.name} view ${i + 1}`}
+                  src={product.image}
+                  alt=""
                   loading="lazy"
-                  className="aspect-square w-full object-cover opacity-70"
+                  className="aspect-square w-full rounded-sm object-cover opacity-70"
                 />
               ))}
             </div>
           </div>
 
-          <div className="lg:pt-6">
-            <Link
-              to="/menu/$category"
-              params={{ category: product.category }}
-              className="label-xs text-brand-deep"
-            >
-              {category?.name}
-            </Link>
-            <h1 className="mt-5 font-display text-[clamp(2.2rem,6vw,4rem)] leading-[1] tracking-[-0.02em] text-brand-brown">
-              {product.name}
-            </h1>
-            <p className="label-xs mt-6 text-brand-orange">{formatPrice(product.price)}</p>
-            <p className="mt-6 max-w-md text-base leading-relaxed text-brand-brown/70">
-              {product.description}
+          <div>
+            <p className="eyebrow text-burnt">{t(`categories.${product.category}`)}</p>
+            <h1 className="mt-3 font-display text-3xl sm:text-4xl">{name}</h1>
+            <p className="mt-1 font-urdu text-lg text-muted-foreground">
+              {isUrdu ? product.name : product.nameUr}
             </p>
-            <dl className="mt-8 border-t border-brand-brown/15 pt-5 font-label text-sm text-brand-brown/70">
-              <div className="flex justify-between py-2">
-                <dt>Weight</dt>
-                <dd>{product.weight ?? "—"}</dd>
+            <Ornament className="mt-6 max-w-[8rem]" />
+
+            <p className="mt-6 text-sm text-muted-foreground sm:text-base">{description}</p>
+            <p className="mt-2 font-urdu text-sm text-muted-foreground">
+              {isUrdu ? product.description : product.descriptionUr}
+            </p>
+
+            <dl className="mt-8 grid grid-cols-2 gap-4 border-y border-border py-5 text-sm">
+              <div>
+                <dt className="eyebrow text-muted-foreground">{t("product.price")}</dt>
+                <dd className="mt-1 font-nav font-semibold text-burnt">{formatPrice(variant.price)}</dd>
               </div>
-              <div className="flex justify-between border-t border-brand-brown/10 py-2">
-                <dt>Price</dt>
-                <dd>{formatPrice(product.price)}</dd>
+              <div>
+                <dt className="eyebrow text-muted-foreground">{t("product.weight")}</dt>
+                <dd className="mt-1">
+                  {product.unit === "piece"
+                    ? t("product.perPiece")
+                    : isUrdu
+                      ? sizeLabelUr(size)
+                      : sizeLabel(size)}
+                </dd>
               </div>
             </dl>
 
-            <div className="mt-9 flex flex-wrap items-center gap-3">
-              <div className="inline-flex items-center border border-brand-brown/25">
+            {product.unit === "piece" ? null : (
+            <div className="mt-6 flex flex-wrap gap-2" role="group" aria-label={t("product.weight")}>
+              {SIZES.map((kg) => (
                 <button
+                  key={kg}
                   type="button"
-                  aria-label="Decrease quantity"
-                  onClick={() => setQty((q) => Math.max(1, q - 1))}
-                  className="grid h-12 w-12 place-items-center text-brand-brown hover:bg-brand-orange"
+                  onClick={() => setSize(kg)}
+                  aria-pressed={size === kg}
+                  className={
+                    "font-nav min-h-11 rounded-sm border px-4 text-sm transition-colors " +
+                    (size === kg
+                      ? "border-burnt bg-burnt text-accent-foreground"
+                      : "border-border text-muted-foreground hover:border-burnt hover:text-burnt")
+                  }
                 >
-                  <Minus className="h-4 w-4" />
+                  {sizeLabel(kg)}
                 </button>
-                <span className="w-10 text-center font-label text-sm text-brand-brown">{qty}</span>
+              ))}
+            </div>
+            )}
+
+            <div className="mt-8 flex flex-wrap items-center gap-3">
+              <div className="flex items-center rounded-sm border border-border">
                 <button
                   type="button"
-                  aria-label="Increase quantity"
-                  onClick={() => setQty((q) => q + 1)}
-                  className="grid h-12 w-12 place-items-center text-brand-brown hover:bg-brand-orange"
+                  onClick={() => setQuantity((q) => Math.max(1, q - 1))}
+                  aria-label="-"
+                  className="grid size-11 place-items-center hover:text-burnt"
                 >
-                  <Plus className="h-4 w-4" />
+                  <Minus className="size-4" />
+                </button>
+                <span className="min-w-10 text-center font-nav text-sm">{quantity}</span>
+                <button
+                  type="button"
+                  onClick={() => setQuantity((q) => q + 1)}
+                  aria-label="+"
+                  className="grid size-11 place-items-center hover:text-burnt"
+                >
+                  <Plus className="size-4" />
                 </button>
               </div>
               <button
                 type="button"
-                onClick={() => add(product, qty)}
-                className={buttonClass("primary", "lg")}
+                onClick={() => {
+                  add(variant, quantity);
+                  toast.success(t("product.added"), {
+                    description: `${name} — ${product.unit === "piece" ? t("product.perPiece") : sizeLabel(size)}`,
+                  });
+                }}
+                className="eyebrow inline-flex min-h-12 items-center rounded-sm bg-ink px-6 text-primary transition-colors hover:bg-primary hover:text-primary-foreground"
               >
-                Add to Cart
+                {t("product.add")}
               </button>
               {wa ? (
                 <a
                   href={wa}
                   target="_blank"
-                  rel="noreferrer"
-                  className={buttonClass("secondary", "lg")}
+                  rel="noopener noreferrer"
+                  className="eyebrow inline-flex min-h-12 items-center gap-2 rounded-sm border border-burnt/40 px-5 text-burnt transition-colors hover:bg-burnt hover:text-accent-foreground"
                 >
-                  Order on WhatsApp
+                  <MessageCircle className="size-4" />
+                  {t("product.whatsapp")}
                 </a>
               ) : null}
             </div>
-            {!wa ? (
-              <p className="mt-4 text-xs text-brand-brown/50">
-                WhatsApp ordering activates once VITE_WHATSAPP_NUMBER is configured.
-              </p>
-            ) : null}
           </div>
         </div>
-      </div>
 
-      {related.length ? (
-        <section className="bg-white py-20">
-          <div className="mx-auto max-w-[1400px] px-5 sm:px-8">
-            <h2 className="font-display text-3xl text-brand-brown">You may also like</h2>
-            <div className="mt-10 grid grid-cols-2 gap-4 sm:gap-5 lg:grid-cols-4">
-              {related.map((p: Product) => (
+        {related.length > 0 ? (
+          <section className="mt-20">
+            <h2 className="text-2xl sm:text-3xl">{t("product.related")}</h2>
+            <div className="mt-8 grid grid-cols-2 gap-3 sm:gap-5 lg:grid-cols-4">
+              {related.map((p) => (
                 <ProductCard key={p.id} product={p} className="h-full" />
               ))}
             </div>
-          </div>
-        </section>
-      ) : null}
-    </>
-  );
-}
-
-function ProductNotFound() {
-  return (
-    <div className="bg-brand-cream px-5 pb-24 pt-44 text-center">
-      <h1 className="font-display text-4xl text-brand-brown">Product not found</h1>
-      <Link to="/menu" className="label-xs mt-6 inline-block text-brand-deep">
-        Back to the menu
-      </Link>
+          </section>
+        ) : null}
+      </div>
     </div>
   );
 }

@@ -1,46 +1,45 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { Hero } from "@/components/home/Hero";
-import { Signatures } from "@/components/home/Signatures";
-import { BestSellers } from "@/components/home/BestSellers";
-import { MithaiExperience } from "@/components/home/MithaiExperience";
-import { FreshFromOven } from "@/components/home/FreshFromOven";
-import { Nashta } from "@/components/home/Nashta";
-import { CustomCakes } from "@/components/home/CustomCakes";
-import { BrandStory } from "@/components/home/BrandStory";
-import { Reviews } from "@/components/home/Reviews";
-import { LocationSection } from "@/components/home/LocationSection";
-
-const TITLE = "Sabir Sweets & Bakers | Traditional Sweets & Fresh Bakery in Lahore";
-const DESCRIPTION =
-  "Discover traditional Pakistani mithai, fresh bakery favourites, cakes and more from Sabir Sweets & Bakers in Lahore.";
+import { GoogleReviews } from "@/components/home/GoogleReviews";
+import {
+  BestSellers,
+  CulturalStrip,
+  Location,
+  Signatures,
+  Story,
+} from "@/components/home/Sections";
 
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: TITLE },
-      { name: "description", content: DESCRIPTION },
-      { property: "og:title", content: TITLE },
-      { property: "og:description", content: DESCRIPTION },
+      { title: "Sabir Sweets & Bakers | Traditional Sweets & Bakery in Lahore" },
+      {
+        name: "description",
+        content:
+          "Discover traditional Pakistani mithai, fresh bakery favourites, cakes and more from Sabir Sweets & Bakers in Lahore.",
+      },
+      { property: "og:title", content: "Sabir Sweets & Bakers | Traditional Sweets & Bakery in Lahore" },
+      {
+        property: "og:description",
+        content: "Traditional mithai, fresh bakery, desi nashta and celebration cakes in Lahore.",
+      },
       { property: "og:url", content: "/" },
     ],
     links: [{ rel: "canonical", href: "/" }],
   }),
-  component: Index,
+  component: Home,
 });
 
-function Index() {
+function Home() {
   return (
-    <>
+    <div className="-mt-[4.75rem] sm:-mt-[5rem]">
       <Hero />
       <Signatures />
       <BestSellers />
-      <MithaiExperience />
-      <FreshFromOven />
-      <Nashta />
-      <CustomCakes />
-      <BrandStory />
-      <Reviews />
-      <LocationSection />
-    </>
+      <Story />
+      <CulturalStrip />
+      <GoogleReviews />
+      <Location />
+    </div>
   );
 }

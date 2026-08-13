@@ -1,20 +1,19 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
-import { Minus, Plus } from "lucide-react";
-import { PageHeader } from "@/components/layout/PageHeader";
-import { useCart } from "@/hooks/useCart";
-import { formatPrice } from "@/lib/config";
-import { buttonClass } from "@/components/ui/BrandButton";
-
-const TITLE = "Your Basket | Sabir Sweets & Bakers";
-const DESCRIPTION = "Review the sweets and bakery items in your Sabir Sweets & Bakers basket.";
+import { Link, createFileRoute } from "@tanstack/react-router";
+import { useState } from "react";
+import { PickupDialog } from "@/components/PickupDialog";
+import { Minus, Plus, Trash2 } from "lucide-react";
+import { useCart } from "@/lib/cart";
+import { useLanguage } from "@/lib/i18n";
+import { SectionHeading } from "@/components/Ornament";
+import { cartSubtotal, formatPrice } from "@/utils/order";
 
 export const Route = createFileRoute("/cart")({
   head: () => ({
     meta: [
-      { title: TITLE },
-      { name: "description", content: DESCRIPTION },
-      { property: "og:title", content: TITLE },
-      { property: "og:description", content: DESCRIPTION },
+      { title: "Your Basket | Sabir Sweets & Bakers" },
+      { name: "description", content: "Review the sweets and bakery items in your Sabir Sweets & Bakers basket." },
+      { property: "og:title", content: "Your Basket | Sabir Sweets & Bakers" },
+      { property: "og:description", content: "Review your order before checkout." },
       { property: "og:url", content: "/cart" },
       { name: "robots", content: "noindex" },
     ],
@@ -24,102 +23,90 @@ export const Route = createFileRoute("/cart")({
 });
 
 function CartPage() {
-  const { lines, setQuantity, remove, subtotal, delivery, total } = useCart();
+  const { items, setQuantity, remove } = useCart();
+  const { t, tUr, isUrdu } = useLanguage();
+  const subtotal = cartSubtotal(items);
+  const [pickupOpen, setPickupOpen] = useState(false);
 
   return (
-    <>
-      <PageHeader label="Basket" title="Your basket" />
-      <section className="bg-brand-cream py-16 sm:py-20">
-        <div className="mx-auto max-w-[1100px] px-5 sm:px-8">
-          {lines.length === 0 ? (
-            <div className="py-16 text-center">
-              <p className="font-display text-3xl text-brand-brown">
-                Your basket is waiting for something sweet.
-              </p>
-              <Link to="/menu" className={buttonClass("primary", "lg", "mt-8")}>
-                Explore Menu
-              </Link>
-            </div>
-          ) : (
-            <div className="grid gap-12 lg:grid-cols-[1.5fr_1fr]">
-              <ul>
-                {lines.map((line) => (
-                  <li
-                    key={line.product.id}
-                    className="grid grid-cols-[88px_minmax(0,1fr)] gap-5 border-b border-brand-brown/15 py-6"
-                  >
-                    <img
-                      src={line.product.image}
-                      alt={line.product.name}
-                      loading="lazy"
-                      className="h-[110px] w-[88px] object-cover"
-                    />
-                    <div className="min-w-0">
-                      <div className="flex items-start justify-between gap-4">
-                        <h2 className="font-display text-xl text-brand-brown">
-                          {line.product.name}
-                        </h2>
-                        <button
-                          type="button"
-                          onClick={() => remove(line.product.id)}
-                          className="label-xs shrink-0 text-brand-brown/50 hover:text-brand-deep"
-                        >
-                          Remove
-                        </button>
-                      </div>
-                      <p className="label-xs mt-2 text-brand-orange">
-                        {formatPrice(line.product.price)}
-                      </p>
-                      <div className="mt-4 inline-flex items-center border border-brand-brown/25">
-                        <button
-                          type="button"
-                          aria-label={`Decrease quantity of ${line.product.name}`}
-                          onClick={() => setQuantity(line.product.id, line.quantity - 1)}
-                          className="grid h-11 w-11 place-items-center text-brand-brown hover:bg-brand-orange"
-                        >
-                          <Minus className="h-4 w-4" />
-                        </button>
-                        <span className="w-10 text-center font-label text-sm text-brand-brown">
-                          {line.quantity}
-                        </span>
-                        <button
-                          type="button"
-                          aria-label={`Increase quantity of ${line.product.name}`}
-                          onClick={() => setQuantity(line.product.id, line.quantity + 1)}
-                          className="grid h-11 w-11 place-items-center text-brand-brown hover:bg-brand-orange"
-                        >
-                          <Plus className="h-4 w-4" />
-                        </button>
-                      </div>
-                    </div>
-                  </li>
-                ))}
-              </ul>
-
-              <aside className="h-fit border border-brand-brown/15 p-7">
-                <h2 className="label-xs text-brand-deep">Order Summary</h2>
-                <dl className="mt-6 space-y-3 font-label text-sm text-brand-brown/80">
-                  <div className="flex justify-between">
-                    <dt>Subtotal</dt>
-                    <dd>{formatPrice(subtotal)}</dd>
-                  </div>
-                  <div className="flex justify-between">
-                    <dt>Delivery</dt>
-                    <dd>{formatPrice(delivery)}</dd>
-                  </div>
-                  <div className="flex justify-between border-t border-brand-brown/15 pt-3 text-brand-brown">
-                    <dt className="label-xs">Total</dt>
-                    <dd className="label-xs">{formatPrice(total)}</dd>
-                  </div>
-                </dl>
-                <Link to="/checkout" className={buttonClass("primary", "md", "mt-7 w-full")}>
-                  Proceed to Checkout
-                </Link>
-              </aside>
-            </div>
-          )}
+    <div className="bg-background pb-24">
+      <section className="jaali border-b border-border bg-secondary/40 py-16">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6">
+          <SectionHeading eyebrow="Basket" title={t("cart.title")} />
         </div>
       </section>
-    </>
+
+      <div className="mx-auto max-w-4xl px-4 py-12 sm:px-6">
+        {items.length === 0 ? (
+          <div className="py-16 text-center">
+            <p className="text-base text-muted-foreground">{t("cart.empty")}</p>
+            <Link
+              to="/menu"
+              className="eyebrow mt-6 inline-flex min-h-12 items-center rounded-sm bg-primary px-6 text-primary-foreground hover:bg-burnt hover:text-accent-foreground"
+            >
+              {t("cart.emptyCta")}
+            </Link>
+          </div>
+        ) : (
+          <>
+            <ul className="divide-y divide-border">
+              {items.map(({ product, quantity }) => (
+                <li key={product.id} className="flex gap-4 py-5">
+                  <img src={product.image} alt="" loading="lazy" className="size-24 rounded-sm object-cover" />
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-base">{isUrdu ? product.nameUr : product.name}</p>
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      {isUrdu ? product.weightUr : product.weight}
+                    </p>
+                    <div className="mt-3 flex flex-wrap items-center gap-3">
+                      <div className="flex items-center rounded-sm border border-border">
+                        <button type="button" aria-label="-" onClick={() => setQuantity(product.id, quantity - 1)} className="grid size-10 place-items-center hover:text-burnt">
+                          <Minus className="size-3.5" />
+                        </button>
+                        <span className="min-w-8 text-center font-nav text-sm">{quantity}</span>
+                        <button type="button" aria-label="+" onClick={() => setQuantity(product.id, quantity + 1)} className="grid size-10 place-items-center hover:text-burnt">
+                          <Plus className="size-3.5" />
+                        </button>
+                      </div>
+                      <span className="font-nav text-sm text-burnt">{formatPrice(product.price)}</span>
+                      <button type="button" aria-label={t("cart.remove")} onClick={() => remove(product.id)} className="grid size-10 place-items-center text-muted-foreground hover:text-destructive">
+                        <Trash2 className="size-4" />
+                      </button>
+                    </div>
+                  </div>
+                </li>
+              ))}
+            </ul>
+
+            <dl className="mt-8 space-y-2 border-t border-border pt-6 text-sm">
+              <div className="flex justify-between">
+                <dt className="text-muted-foreground">{t("cart.subtotal")}</dt>
+                <dd>{subtotal === null ? "PKR —" : formatPrice(subtotal)}</dd>
+              </div>
+              <div className="flex justify-between">
+                <dt className="text-muted-foreground">{t("cart.delivery")}</dt>
+                <dd className="text-xs text-muted-foreground">{t("cart.deliveryNote")}</dd>
+              </div>
+              <div className="flex justify-between border-t border-border pt-2 font-nav font-semibold">
+                <dt>{t("cart.total")}</dt>
+                <dd>{subtotal === null ? "PKR —" : formatPrice(subtotal)}</dd>
+              </div>
+            </dl>
+
+            <button
+              type="button"
+              onClick={() => setPickupOpen(true)}
+              className="eyebrow mt-6 flex w-full min-h-12 items-center justify-center rounded-sm bg-ink text-primary transition-colors hover:bg-primary hover:text-primary-foreground"
+            >
+              {t("cart.checkout")}
+                    <span className="ms-2 font-urdu text-sm tracking-normal normal-case">
+                      {tUr("cart.checkout")}
+                    </span>
+            </button>
+          </>
+        )}
+      </div>
+      <PickupDialog open={pickupOpen} onClose={() => setPickupOpen(false)} />
+    </div>
   );
 }

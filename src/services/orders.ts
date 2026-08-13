@@ -1,43 +1,24 @@
-import type { Order, OrderDraft, OrderStatus } from "@/types";
-import { API_BASE_URL, request } from "./api";
+import { apiPost } from "./api";
+import type { CartItem, Order, OrderCustomer, OrderStatus } from "@/types";
 
-export const ORDER_STATUSES: OrderStatus[] = [
+export const orderStatuses: OrderStatus[] = [
   "pending",
   "confirmed",
   "preparing",
   "ready",
-  "out_for_delivery",
+  "out",
   "delivered",
   "cancelled",
 ];
 
-export const ORDER_STATUS_LABELS: Record<OrderStatus, string> = {
-  pending: "Pending",
-  confirmed: "Confirmed",
-  preparing: "Preparing",
-  ready: "Ready",
-  out_for_delivery: "Out for Delivery",
-  delivered: "Delivered",
-  cancelled: "Cancelled",
-};
-
-/**
- * Creates an order. Without a configured backend the order is recorded
- * locally so the flow stays honest about what happened.
- */
-export async function createOrder(draft: OrderDraft): Promise<Order> {
-  if (API_BASE_URL) {
-    return request<Order>("/orders", { method: "POST", body: JSON.stringify(draft) });
-  }
-  return {
-    ...draft,
-    id: `LOCAL-${Date.now().toString(36).toUpperCase()}`,
+/** Placeholder submit. Wire to a backend/table when available. */
+export function createOrder(items: CartItem[], customer: OrderCustomer): Promise<Order> {
+  const draft: Order = {
+    id: `SSB-${Date.now().toString(36).toUpperCase()}`,
+    items,
+    customer,
     status: "pending",
     createdAt: new Date().toISOString(),
   };
-}
-
-export async function listOrders(): Promise<Order[]> {
-  if (API_BASE_URL) return request<Order[]>("/orders");
-  return [];
+  return apiPost<Order, Order>("/orders", draft, () => draft);
 }

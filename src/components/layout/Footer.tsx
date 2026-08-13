@@ -1,113 +1,73 @@
 import { Link } from "@tanstack/react-router";
-import { Facebook, Instagram, MessageCircle } from "lucide-react";
-import { BRAND } from "@/lib/config";
-
-const LINKS = [
-  { to: "/", label: "Home" },
-  { to: "/menu", label: "Menu" },
-  { to: "/cakes", label: "Cakes" },
-  { to: "/about", label: "About" },
-  { to: "/contact", label: "Contact" },
-  { to: "/cart", label: "Cart" },
-  { to: "/checkout", label: "Checkout" },
-] as const;
+import { MapPin, Phone } from "lucide-react";
+import { useLanguage } from "@/lib/i18n";
+import { Ornament } from "@/components/Ornament";
+import { ADDRESS_EN, MAPS_URL, OPENING_HOURS, PHONE_INTL, PHONE_TEL } from "@/utils/order";
 
 export function Footer() {
+  const { t } = useLanguage();
+  const year = new Date().getFullYear();
+
   return (
-    <footer className="bg-brand-ink text-brand-cream">
-      <div className="mx-auto max-w-[1400px] px-5 py-20 sm:px-8">
-        <div className="grid gap-14 lg:grid-cols-[1.4fr_1fr_1fr]">
+    <footer className="jaali-dark bg-ink text-beige">
+      <div className="mx-auto max-w-7xl px-4 py-14 sm:px-6 lg:py-20">
+        <div className="grid gap-10 md:grid-cols-[1.4fr_1fr_1fr]">
           <div>
-            <p className="font-display text-3xl leading-none">
-              Sabir<span className="text-brand-orange"> Sweets</span> & Bakers
-            </p>
-            <p className="label-xs mt-5 text-brand-cream/50">Tradition in every bite.</p>
-            <address className="mt-8 not-italic text-sm leading-relaxed text-brand-cream/70">
-              {BRAND.address.line1},<br />
-              {BRAND.address.line2},<br />
-              {BRAND.address.city}
-            </address>
+            <p className="font-display text-2xl text-beige">{t("brand.name")}</p>
+            <p className="mt-3 max-w-sm text-sm text-beige/65">{t("footer.tagline")}</p>
+            <Ornament className="mt-6 max-w-[9rem]" tone="light" />
           </div>
 
-          <nav aria-label="Footer">
-            <p className="label-xs mb-6 text-brand-orange">Explore</p>
-            <ul className="space-y-3">
-              {LINKS.map((l) => (
-                <li key={l.to}>
-                  <Link
-                    to={l.to}
-                    className="text-sm text-brand-cream/70 transition-colors hover:text-brand-orange"
-                  >
-                    {l.label}
+          <nav aria-label={t("footer.explore")}>
+            <p className="eyebrow text-primary">{t("footer.explore")}</p>
+            <ul className="mt-4 space-y-2.5 text-sm">
+              {[
+                { to: "/menu", label: t("nav.menu") },
+                { to: "/about", label: t("nav.about") },
+                { to: "/contact", label: t("nav.contact") },
+                { to: "/cart", label: t("nav.cart") },
+              ].map((item) => (
+                <li key={item.to}>
+                  <Link to={item.to} className="text-beige/70 transition-colors hover:text-primary">
+                    {item.label}
                   </Link>
                 </li>
               ))}
-              <li>
-                <Link
-                  to="/contact"
-                  className="text-sm text-brand-cream/70 transition-colors hover:text-brand-orange"
-                >
-                  Order Help
-                </Link>
-              </li>
             </ul>
           </nav>
 
           <div>
-            <p className="label-xs mb-6 text-brand-orange">Find us</p>
+            <p className="eyebrow text-primary">{t("footer.visit")}</p>
+            <address className="mt-4 text-sm not-italic text-beige/70">
+              {ADDRESS_EN}
+            </address>
             <a
-              href={BRAND.mapsUrl}
-              target="_blank"
-              rel="noreferrer"
-              className="text-sm text-brand-cream/70 transition-colors hover:text-brand-orange"
+              href={PHONE_TEL}
+              className="mt-3 inline-flex items-center gap-2 text-sm text-beige/70 transition-colors hover:text-primary"
             >
-              View on Google Maps
+              <Phone className="size-4" />
+              {PHONE_INTL}
             </a>
-            <div className="mt-8 flex gap-3">
-              {BRAND.social.instagram ? (
-                <a
-                  href={BRAND.social.instagram}
-                  target="_blank"
-                  rel="noreferrer"
-                  aria-label="Instagram"
-                  className="grid h-11 w-11 place-items-center border border-brand-cream/20 transition-colors hover:border-brand-orange hover:text-brand-orange"
-                >
-                  <Instagram className="h-4 w-4" strokeWidth={1.5} />
-                </a>
-              ) : null}
-              {BRAND.social.facebook ? (
-                <a
-                  href={BRAND.social.facebook}
-                  target="_blank"
-                  rel="noreferrer"
-                  aria-label="Facebook"
-                  className="grid h-11 w-11 place-items-center border border-brand-cream/20 transition-colors hover:border-brand-orange hover:text-brand-orange"
-                >
-                  <Facebook className="h-4 w-4" strokeWidth={1.5} />
-                </a>
-              ) : null}
-              {BRAND.whatsapp ? (
-                <a
-                  href={`https://wa.me/${BRAND.whatsapp.replace(/\D/g, "")}`}
-                  target="_blank"
-                  rel="noreferrer"
-                  aria-label="WhatsApp"
-                  className="grid h-11 w-11 place-items-center border border-brand-cream/20 transition-colors hover:border-brand-orange hover:text-brand-orange"
-                >
-                  <MessageCircle className="h-4 w-4" strokeWidth={1.5} />
-                </a>
-              ) : null}
-            </div>
-            {!BRAND.social.instagram && !BRAND.social.facebook && !BRAND.whatsapp ? (
-              <p className="mt-6 max-w-xs text-xs leading-relaxed text-brand-cream/40">
-                Social and WhatsApp links appear here once the official accounts are provided.
-              </p>
-            ) : null}
+            <ul className="mt-3 space-y-1 text-sm text-beige/55">
+              {OPENING_HOURS.map((line) => (
+                <li key={line}>{line}</li>
+              ))}
+            </ul>
+
+            <a
+              href={MAPS_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-4 inline-flex min-h-11 items-center gap-2 font-nav text-xs font-semibold tracking-widest uppercase text-primary transition-colors hover:text-beige"
+            >
+              <MapPin className="size-4" />
+              {t("location.directions")}
+            </a>
           </div>
         </div>
 
-        <p className="label-xs mt-20 border-t border-brand-cream/12 pt-8 text-[0.5625rem] text-brand-cream/40">
-          © 2026 Sabir Sweets &amp; Bakers. All rights reserved.
+        <p className="mt-12 border-t border-beige/15 pt-6 text-xs text-beige/50">
+          © {year} {t("brand.name")}. {t("footer.rights")}
         </p>
       </div>
     </footer>
