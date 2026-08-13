@@ -36,7 +36,6 @@ export function Signatures() {
         <div className="mt-12 grid grid-cols-2 gap-3 sm:gap-4">
           {shown.map((category, i) => (
             <Reveal key={category.id} delay={i * 0.05} className={cn("min-h-0", "aspect-square")}>
-
               <Link
                 to="/menu/$category"
                 params={{ category: category.id }}
@@ -152,22 +151,17 @@ export function Story() {
           <p className="eyebrow text-burnt">Our Story</p>
           <h2 className="mt-4 text-3xl leading-tight sm:text-4xl">{t("story.title")}</h2>
           <Ornament className="mx-auto mt-6 max-w-[10rem]" />
-          <img
-            src={shopfront.url}
-            alt={t("story.imageAlt")}
-            loading="lazy"
-            className="mt-8 aspect-video w-full rounded-sm object-cover shadow-card"
-          />
-          <p className="mt-8 text-sm text-muted-foreground sm:text-base">{t("story.body1")}</p>
-          <p className="mt-4 text-sm text-muted-foreground sm:text-base">{t("story.body2")}</p>
-          <p className="mt-4 text-sm text-muted-foreground sm:text-base">{t("story.body3")}</p>
-          <p className="mt-8 font-display text-lg text-burnt sm:text-xl">{t("story.closing")}</p>
+          <div className="mt-8 px-6 pb-12 w-full rounded-sm object-cover shadow-card">
+            <p className="mt-8 text-sm text-muted-foreground sm:text-base">{t("story.body1")}</p>
+            <p className="mt-4 text-sm text-muted-foreground sm:text-base">{t("story.body2")}</p>
+            <p className="mt-4 text-sm text-muted-foreground sm:text-base">{t("story.body3")}</p>
+            <p className="mt-8 font-display text-lg text-burnt sm:text-xl">{t("story.closing")}</p>
+          </div>
         </Reveal>
       </div>
     </section>
   );
 }
-
 
 /* -------------------------------- Cultural strip ------------------------------ */
 
@@ -181,7 +175,6 @@ export function CulturalStrip() {
     </section>
   );
 }
-
 
 /* ----------------------------------- Reviews ---------------------------------- */
 
@@ -221,7 +214,9 @@ export function Reviews() {
 
 export function Location() {
   const { t } = useLanguage();
-  const wa = whatsappUrl("Assalam o Alaikum, I'd like to place an order with Sabir Sweets & Bakers.");
+  const wa = whatsappUrl(
+    "Assalam o Alaikum, I'd like to place an order with Sabir Sweets & Bakers.",
+  );
 
   return (
     <section className="bg-brown text-brown-foreground">
@@ -288,7 +283,6 @@ export function Location() {
             className="size-full min-h-[20rem] border-0 grayscale-[15%]"
           />
         </Reveal>
-
       </div>
     </section>
   );
