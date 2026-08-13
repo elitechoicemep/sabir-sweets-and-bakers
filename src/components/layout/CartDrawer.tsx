@@ -128,10 +128,6 @@ export function CartDrawer() {
                       <dt className="text-muted-foreground">{t("cart.subtotal")}</dt>
                       <dd>{subtotal === null ? "PKR —" : formatPrice(subtotal)}</dd>
                     </div>
-                    <div className="flex justify-between">
-                      <dt className="text-muted-foreground">{t("cart.delivery")}</dt>
-                      <dd className="text-xs text-muted-foreground">{t("cart.deliveryNote")}</dd>
-                    </div>
                     <div className="flex justify-between border-t border-border pt-2 font-nav font-semibold">
                       <dt>{t("cart.total")}</dt>
                       <dd>{subtotal === null ? "PKR —" : formatPrice(subtotal)}</dd>
